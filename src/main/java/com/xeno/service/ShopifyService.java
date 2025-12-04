@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -132,7 +133,7 @@ public class ShopifyService {
         customer.setLastName((String) customerData.get("last_name"));
         customer.setPhone((String) customerData.get("phone"));
         customer.setOrdersCount(((Number) customerData.getOrDefault("orders_count", 0)).intValue());
-        customer.setTotalSpent(Double.parseDouble(String.valueOf(customerData.getOrDefault("total_spent", "0.0"))));
+        customer.setTotalSpent(new BigDecimal(String.valueOf(customerData.getOrDefault("total_spent", "0.0"))));
         customer.setState((String) customerData.get("state"));
         customer.setTags((String) customerData.get("tags"));
 
@@ -161,7 +162,7 @@ public class ShopifyService {
         List<Map<String, Object>> variants = (List<Map<String, Object>>) productData.get("variants");
         if (variants != null && !variants.isEmpty()) {
             Map<String, Object> firstVariant = variants.get(0);
-            product.setPrice(Double.parseDouble(String.valueOf(firstVariant.getOrDefault("price", "0.0"))));
+            product.setPrice(new BigDecimal(String.valueOf(firstVariant.getOrDefault("price", "0.0"))));
             product.setInventoryQuantity(((Number) firstVariant.getOrDefault("inventory_quantity", 0)).intValue());
         }
 
@@ -194,9 +195,9 @@ public class ShopifyService {
         order.setCustomer(customer);
         order.setOrderNumber(String.valueOf(orderData.get("order_number")));
         order.setOrderDate(parseDateTime((String) orderData.get("created_at")));
-        order.setTotalPrice(Double.parseDouble(String.valueOf(orderData.get("total_price"))));
-        order.setSubtotalPrice(Double.parseDouble(String.valueOf(orderData.getOrDefault("subtotal_price", "0.0"))));
-        order.setTotalTax(Double.parseDouble(String.valueOf(orderData.getOrDefault("total_tax", "0.0"))));
+        order.setTotalPrice(new BigDecimal(String.valueOf(orderData.get("total_price"))));
+        order.setSubtotalPrice(new BigDecimal(String.valueOf(orderData.getOrDefault("subtotal_price", "0.0"))));
+        order.setTotalTax(new BigDecimal(String.valueOf(orderData.getOrDefault("total_tax", "0.0"))));
         order.setFinancialStatus((String) orderData.get("financial_status"));
         order.setFulfillmentStatus((String) orderData.get("fulfillment_status"));
         order.setCurrency((String) orderData.getOrDefault("currency", "USD"));
@@ -220,8 +221,8 @@ public class ShopifyService {
                 .productTitle((String) lineItemData.get("title"))
                 .variantTitle((String) lineItemData.get("variant_title"))
                 .quantity(((Number) lineItemData.get("quantity")).intValue())
-                .price(Double.parseDouble(String.valueOf(lineItemData.get("price"))))
-                .totalDiscount(Double.parseDouble(String.valueOf(lineItemData.getOrDefault("total_discount", "0.0"))))
+                .price(new BigDecimal(String.valueOf(lineItemData.get("price"))))
+                .totalDiscount(new BigDecimal(String.valueOf(lineItemData.getOrDefault("total_discount", "0.0"))))
                 .build();
 
         orderItemRepository.save(orderItem);

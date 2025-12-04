@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -13,6 +15,6 @@ public class TopCustomerDTO {
     private String customerId;
     private String name;
     private String email;
-    private Double totalSpent;
+    private BigDecimal totalSpent;
     private Integer ordersCount;
 }
