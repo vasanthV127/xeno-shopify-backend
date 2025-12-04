@@ -6,6 +6,14 @@ import com.xeno.model.Tenant;
 import com.xeno.repository.CustomerRepository;
 import com.xeno.repository.TenantRepository;
 import com.xeno.security.UserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +31,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/customers")
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "https://xeno-shopify-frontend-five.vercel.app"})
+@Tag(name = "Customers", description = "Customer management and segmentation endpoints")
+@SecurityRequirement(name = "bearer-jwt")
 public class CustomerController {
 
     @Autowired
@@ -35,13 +45,28 @@ public class CustomerController {
      * Get all customers with filtering, search, and pagination
      */
     @GetMapping
+    @Operation(
+            summary = "List customers with filters",
+            description = "Get paginated list of customers with optional filtering by segment (high/medium/low value) and search by name/email"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved customers"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing JWT token", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<Map<String, Object>> getCustomers(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Parameter(description = "Filter by customer segment: high (>$5000), medium ($1000-$5000), low (<$1000)")
             @RequestParam(required = false) String segment,
+            @Parameter(description = "Search term for customer name or email")
             @RequestParam(required = false) String search,
+            @Parameter(description = "Page number (0-indexed)")
             @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Number of items per page")
             @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "Field to sort by")
             @RequestParam(defaultValue = "totalSpent") String sortBy,
+            @Parameter(description = "Sort direction: asc or desc")
             @RequestParam(defaultValue = "desc") String sortDir) {
 
         Tenant tenant = tenantRepository.findByTenantId(userPrincipal.getTenantId())
@@ -77,6 +102,11 @@ public class CustomerController {
      * Get customer segments statistics
      */
     @GetMapping("/segments")
+    @Operation(
+            summary = "Get customer segment statistics",
+            description = "Returns count of customers in each value segment (high/medium/low) and total"
+    )
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved segment stats")
     public ResponseEntity<Map<String, Object>> getSegmentStats(
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
