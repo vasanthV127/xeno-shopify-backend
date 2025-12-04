@@ -57,7 +57,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     List<Customer> findByTenantAndTotalSpentLessThan(Tenant tenant, BigDecimal amount);
     
     @Query("SELECT c FROM Customer c WHERE c.tenant = :tenant AND " +
-           "(LOWER(c.name) LIKE :search OR LOWER(c.email) LIKE :search)")
+           "(LOWER(c.firstName) LIKE :search OR LOWER(c.lastName) LIKE :search OR LOWER(c.email) LIKE :search)")
     Page<Customer> searchCustomers(@Param("search") String search, @Param("tenant") Tenant tenant, Pageable pageable);
     
     @Query("SELECT c FROM Customer c WHERE c.tenant = :tenant AND " +
