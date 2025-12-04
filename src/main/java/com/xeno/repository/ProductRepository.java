@@ -24,11 +24,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     
     long countByTenantTenantId(String tenantId);
     
-    @Query("SELECT p, COUNT(oi.id) as orderCount FROM Product p " +
-           "LEFT JOIN OrderItem oi ON oi.product.id = p.id " +
-           "LEFT JOIN Order o ON oi.order.id = o.id " +
-           "WHERE p.tenant.tenantId = :tenantId " +
+    @Query(value = "SELECT p.*, COUNT(oi.id) as order_count FROM products p " +
+           "LEFT JOIN order_items oi ON oi.product_id = p.id " +
+           "LEFT JOIN orders o ON oi.order_id = o.id " +
+           "WHERE p.tenant_id = (SELECT id FROM tenants WHERE tenant_id = :tenantId) " +
            "GROUP BY p.id " +
-           "ORDER BY orderCount DESC")
+           "ORDER BY order_count DESC " +
+           "LIMIT :limit", nativeQuery = true)
     List<Object[]> findTopProductsByOrders(@Param("tenantId") String tenantId, @Param("limit") int limit);
 }
