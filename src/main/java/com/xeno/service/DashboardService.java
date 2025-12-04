@@ -86,11 +86,19 @@ public class DashboardService {
         List<Object[]> stats = orderRepository.getOrderStatsByDateRange(tenantId, startDateTime, endDateTime);
         
         return stats.stream()
-                .map(stat -> OrderStatsDTO.builder()
-                        .date((LocalDate) stat[0])
+                .map(stat -> {
+                    LocalDate date;
+                    if (stat[0] instanceof java.sql.Date) {
+                        date = ((java.sql.Date) stat[0]).toLocalDate();
+                    } else {
+                        date = (LocalDate) stat[0];
+                    }
+                    return OrderStatsDTO.builder()
+                        .date(date)
                         .revenue(stat[1] != null ? ((Number) stat[1]).doubleValue() : 0.0)
                         .orderCount(stat[2] != null ? ((Number) stat[2]).longValue() : 0L)
-                        .build())
+                        .build();
+                })
                 .collect(Collectors.toList());
     }
 }
