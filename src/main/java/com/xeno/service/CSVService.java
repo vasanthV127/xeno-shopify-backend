@@ -42,11 +42,9 @@ public class CSVService {
                         "Phone",
                         "Orders Count",
                         "Total Spent",
-                        "Currency",
                         "Customer Since",
                         "Last Order Date",
-                        "Accepts Marketing",
-                        "Status",
+                        "State",
                         "Tags"
                 )
                 .build();
@@ -63,10 +61,8 @@ public class CSVService {
                         customer.getPhone() != null ? customer.getPhone() : "",
                         customer.getOrdersCount(),
                         String.format("%.2f", customer.getTotalSpent()),
-                        customer.getCurrency() != null ? customer.getCurrency() : "USD",
                         customer.getCreatedAt() != null ? customer.getCreatedAt().format(DATE_FORMATTER) : "",
-                        customer.getUpdatedAt() != null ? customer.getUpdatedAt().format(DATE_FORMATTER) : "",
-                        customer.isAcceptsMarketing(),
+                        customer.getLastOrderDate() != null ? customer.getLastOrderDate().format(DATE_FORMATTER) : "",
                         customer.getState() != null ? customer.getState() : "",
                         customer.getTags() != null ? customer.getTags() : ""
                 );

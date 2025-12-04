@@ -54,11 +54,10 @@ public class ProductController {
         List<Product> allProducts = productRepository.findByTenant(tenant);
         double totalInventoryValue = allProducts.stream()
                 .mapToDouble(p -> {
-                    try {
-                        return Double.parseDouble(p.getPrice()) * (p.getInventoryQuantity() != null ? p.getInventoryQuantity() : 0);
-                    } catch (NumberFormatException e) {
-                        return 0.0;
+                    if (p.getPrice() != null && p.getInventoryQuantity() != null) {
+                        return p.getPrice().doubleValue() * p.getInventoryQuantity();
                     }
+                    return 0.0;
                 })
                 .sum();
 
