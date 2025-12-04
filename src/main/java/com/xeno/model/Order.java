@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -46,16 +47,16 @@ public class Order {
     private LocalDateTime orderDate;
 
     @Column(nullable = false, precision = 10, scale = 2)
-    private Double totalPrice;
+    private BigDecimal totalPrice;
 
     @Column(precision = 10, scale = 2)
-    private Double subtotalPrice;
+    private BigDecimal subtotalPrice;
 
     @Column(precision = 10, scale = 2)
-    private Double totalTax;
+    private BigDecimal totalTax;
 
     @Column(precision = 10, scale = 2)
-    private Double totalShipping;
+    private BigDecimal totalShipping;
 
     @Column
     private String financialStatus;

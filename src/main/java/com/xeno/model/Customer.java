@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -50,7 +51,7 @@ public class Customer {
     private Integer ordersCount = 0;
 
     @Column(precision = 10, scale = 2)
-    private Double totalSpent = 0.0;
+    private BigDecimal totalSpent = BigDecimal.ZERO;
 
     @Column
     private String state;

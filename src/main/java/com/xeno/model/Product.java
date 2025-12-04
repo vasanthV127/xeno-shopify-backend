@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -44,7 +45,7 @@ public class Product {
     private String productType;
 
     @Column(precision = 10, scale = 2)
-    private Double price;
+    private BigDecimal price;
 
     @Column
     private String status;
