@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PermitAll;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,6 +24,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
+    @PermitAll
     @Operation(
             summary = "Register a new tenant",
             description = "Create a new tenant account with Shopify store credentials. Returns JWT token for immediate access."
@@ -40,6 +42,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @PermitAll
     @Operation(
             summary = "Login to existing account",
             description = "Authenticate with email and password. Returns JWT token valid for 24 hours."
@@ -57,6 +60,7 @@ public class AuthController {
     }
 
     @GetMapping("/health")
+    @PermitAll
     @Operation(summary = "Health check", description = "Simple health check endpoint to verify API is running")
     @ApiResponse(responseCode = "200", description = "API is healthy")
     public ResponseEntity<String> health() {

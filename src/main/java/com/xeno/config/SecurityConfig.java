@@ -57,15 +57,15 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/signup", "/api/auth/login", "/api/auth/health", 
                         "/api/health", "/api/webhooks/**",
                         "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", 
-                        "/swagger-resources/**", "/webjars/**").permitAll()
+                        "/swagger-resources/**", "/webjars/**", "/error").permitAll()
                 .anyRequest().authenticated()
-            );
+            )
+            .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint));
 
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
