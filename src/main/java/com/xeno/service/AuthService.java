@@ -29,11 +29,11 @@ public class AuthService {
     @Transactional
     public AuthResponse signup(SignupRequest request) {
         if (tenantRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new IllegalArgumentException("Email already exists");
         }
 
         if (tenantRepository.existsByShopifyDomain(request.getShopifyDomain())) {
-            throw new RuntimeException("Shopify domain already registered");
+            throw new IllegalArgumentException("Shopify domain already registered");
         }
 
         Tenant tenant = Tenant.builder()
