@@ -60,8 +60,10 @@ public class SecurityConfig {
             .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/api/health", "/api/webhooks/**",
-                        "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                .requestMatchers("/api/auth/signup", "/api/auth/login", "/api/auth/health", 
+                        "/api/health", "/api/webhooks/**",
+                        "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", 
+                        "/swagger-resources/**", "/webjars/**").permitAll()
                 .anyRequest().authenticated()
             );
 
