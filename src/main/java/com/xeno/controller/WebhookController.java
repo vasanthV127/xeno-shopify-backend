@@ -212,7 +212,7 @@ public class WebhookController {
         if (orderJson.has("customer") && !orderJson.get("customer").isNull()) {
             JsonNode customerJson = orderJson.get("customer");
             String customerId = customerJson.get("id").asText();
-            Optional<Customer> existingCustomer = customerRepository.findByShopifyCustomerIdAndTenant(customerId, tenant);
+            Optional<Customer> existingCustomer = customerRepository.findByTenantTenantIdAndShopifyCustomerId(tenant.getTenantId(), customerId);
             existingCustomer.ifPresent(order::setCustomer);
         }
 
@@ -275,11 +275,12 @@ public class WebhookController {
         }
 
         // Parse name
-        String firstName = customerJson.has("first_name") && !customerJson.get("first_name").isNull() 
-                ? customerJson.get("first_name").asText() : "";
-        String lastName = customerJson.has("last_name") && !customerJson.get("last_name").isNull() 
-                ? customerJson.get("last_name").asText() : "";
-        customer.setName((firstName + " " + lastName).trim());
+        if (customerJson.has("first_name") && !customerJson.get("first_name").isNull()) {
+            customer.setFirstName(customerJson.get("first_name").asText());
+        }
+        if (customerJson.has("last_name") && !customerJson.get("last_name").isNull()) {
+            customer.setLastName(customerJson.get("last_name").asText());
+        }
 
         if (customerJson.has("phone") && !customerJson.get("phone").isNull()) {
             customer.setPhone(customerJson.get("phone").asText());
