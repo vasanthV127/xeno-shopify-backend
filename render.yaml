@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: xeno-backend
+    env: java
+    plan: free
+    buildCommand: mvn clean install -DskipTests
+    startCommand: java -Dserver.port=$PORT -Dspring.profiles.active=prod -jar target/*.jar
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: xeno-postgres
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: xeno-postgres
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: xeno-postgres
+          property: password
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRATION
+        value: 86400000
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+databases:
+  - name: xeno-postgres
+    plan: free
+    databaseName: xeno_db
+    user: xeno_user
