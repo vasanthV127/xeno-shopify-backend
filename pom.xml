@@ -96,6 +96,13 @@
             <version>2.3.0</version>
         </dependency>
         
+        <!-- Apache Commons CSV -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.10.0</version>
+        </dependency>
+        
         <!-- DevTools -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

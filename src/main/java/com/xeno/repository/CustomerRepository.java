@@ -42,13 +42,25 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     // Pagination and filtering
     Page<Customer> findByTenant(Tenant tenant, Pageable pageable);
     
+    List<Customer> findByTenant(Tenant tenant);
+    
     Page<Customer> findByTenantAndTotalSpentGreaterThan(Tenant tenant, BigDecimal amount, Pageable pageable);
+    
+    List<Customer> findByTenantAndTotalSpentGreaterThan(Tenant tenant, BigDecimal amount);
     
     Page<Customer> findByTenantAndTotalSpentBetween(Tenant tenant, BigDecimal minAmount, BigDecimal maxAmount, Pageable pageable);
     
+    List<Customer> findByTenantAndTotalSpentBetween(Tenant tenant, BigDecimal minAmount, BigDecimal maxAmount);
+    
     Page<Customer> findByTenantAndTotalSpentLessThan(Tenant tenant, BigDecimal amount, Pageable pageable);
+    
+    List<Customer> findByTenantAndTotalSpentLessThan(Tenant tenant, BigDecimal amount);
     
     @Query("SELECT c FROM Customer c WHERE c.tenant = :tenant AND " +
            "(LOWER(c.name) LIKE :search OR LOWER(c.email) LIKE :search)")
     Page<Customer> searchCustomers(@Param("search") String search, @Param("tenant") Tenant tenant, Pageable pageable);
+    
+    @Query("SELECT c FROM Customer c WHERE c.tenant = :tenant AND " +
+           "(LOWER(c.firstName) LIKE :search OR LOWER(c.lastName) LIKE :search OR LOWER(c.email) LIKE :search)")
+    List<Customer> searchCustomersAll(@Param("search") String search, @Param("tenant") Tenant tenant);
 }

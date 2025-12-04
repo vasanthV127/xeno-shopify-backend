@@ -6,6 +6,7 @@ import com.xeno.model.Tenant;
 import com.xeno.repository.CustomerRepository;
 import com.xeno.repository.TenantRepository;
 import com.xeno.security.UserPrincipal;
+import com.xeno.service.CSVService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -19,12 +20,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -40,6 +45,9 @@ public class CustomerController {
 
     @Autowired
     private TenantRepository tenantRepository;
+
+    @Autowired
+    private CSVService csvService;
 
     /**
      * Get all customers with filtering, search, and pagination
@@ -155,6 +163,63 @@ public class CustomerController {
     }
 
     /**
+     * Export customers to CSV file
+     */
+    @GetMapping("/export")
+    @Operation(
+            summary = "Export customers to CSV",
+            description = "Download all customers (or filtered subset) as CSV file with full customer details"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "CSV file generated successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing JWT token", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    public ResponseEntity<byte[]> exportCustomersCSV(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Parameter(description = "Filter by customer segment: high (>$5000), medium ($1000-$5000), low (<$1000)")
+            @RequestParam(required = false) String segment,
+            @Parameter(description = "Search term for customer name or email")
+            @RequestParam(required = false) String search) {
+
+        try {
+            Tenant tenant = tenantRepository.findByTenantId(userPrincipal.getTenantId())
+                    .orElseThrow(() -> new RuntimeException("Tenant not found"));
+
+            // Get customers based on filters (no pagination for export)
+            List<Customer> customers;
+
+            if (search != null && !search.trim().isEmpty()) {
+                String searchTerm = "%" + search.toLowerCase() + "%";
+                customers = customerRepository.searchCustomersAll(searchTerm, tenant);
+            } else if (segment != null && !segment.isEmpty()) {
+                customers = getCustomersBySegmentAll(segment, tenant);
+            } else {
+                customers = customerRepository.findByTenant(tenant);
+            }
+
+            // Generate CSV
+            byte[] csvBytes = csvService.generateCustomersCSV(customers);
+            String filename = csvService.generateFilename(tenant.getStoreName());
+
+            // Set response headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("text/csv"));
+            headers.setContentDispositionFormData("attachment", filename);
+            headers.setCacheControl("no-cache, no-store, must-revalidate");
+            headers.setPragma("no-cache");
+            headers.setExpires(0);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(csvBytes);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to generate CSV: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Helper method to get customers by segment
      */
     private Page<Customer> getCustomersBySegment(String segment, Tenant tenant, Pageable pageable) {
@@ -166,6 +231,21 @@ public class CustomerController {
             case "low" -> customerRepository.findByTenantAndTotalSpentLessThan(
                     tenant, new BigDecimal("1000"), pageable);
             default -> customerRepository.findByTenant(tenant, pageable);
+        };
+    }
+
+    /**
+     * Helper method to get all customers by segment (no pagination for export)
+     */
+    private List<Customer> getCustomersBySegmentAll(String segment, Tenant tenant) {
+        return switch (segment.toLowerCase()) {
+            case "high" -> customerRepository.findByTenantAndTotalSpentGreaterThan(
+                    tenant, new BigDecimal("5000"));
+            case "medium" -> customerRepository.findByTenantAndTotalSpentBetween(
+                    tenant, new BigDecimal("1000"), new BigDecimal("5000"));
+            case "low" -> customerRepository.findByTenantAndTotalSpentLessThan(
+                    tenant, new BigDecimal("1000"));
+            default -> customerRepository.findByTenant(tenant);
         };
     }
 }
