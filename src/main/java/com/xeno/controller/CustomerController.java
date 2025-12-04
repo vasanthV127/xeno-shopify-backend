@@ -1,11 +1,9 @@
 package com.xeno.controller;
 
-import com.xeno.dto.CustomerDTO;
 import com.xeno.model.Customer;
 import com.xeno.model.Tenant;
 import com.xeno.repository.CustomerRepository;
-import com.xeno.repository.TenantRepository;
-import com.xeno.security.UserPrincipal;
+import com.xeno.service.AuthService;
 import com.xeno.service.CSVService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,7 +21,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -31,7 +28,6 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/customers")
@@ -44,7 +40,7 @@ public class CustomerController {
     private CustomerRepository customerRepository;
 
     @Autowired
-    private TenantRepository tenantRepository;
+    private AuthService authService;
 
     @Autowired
     private CSVService csvService;
@@ -63,7 +59,6 @@ public class CustomerController {
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     public ResponseEntity<Map<String, Object>> getCustomers(
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
             @Parameter(description = "Filter by customer segment: high (>$5000), medium ($1000-$5000), low (<$1000)")
             @RequestParam(required = false) String segment,
             @Parameter(description = "Search term for customer name or email")
@@ -77,8 +72,7 @@ public class CustomerController {
             @Parameter(description = "Sort direction: asc or desc")
             @RequestParam(defaultValue = "desc") String sortDir) {
 
-        Tenant tenant = tenantRepository.findByTenantId(userPrincipal.getTenantId())
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+        Tenant tenant = authService.getCurrentTenant();
 
         Sort sort = sortDir.equalsIgnoreCase("asc") 
                 ? Sort.by(sortBy).ascending() 
@@ -115,11 +109,9 @@ public class CustomerController {
             description = "Returns count of customers in each value segment (high/medium/low) and total"
     )
     @ApiResponse(responseCode = "200", description = "Successfully retrieved segment stats")
-    public ResponseEntity<Map<String, Object>> getSegmentStats(
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    public ResponseEntity<Map<String, Object>> getSegmentStats() {
 
-        Tenant tenant = tenantRepository.findByTenantId(userPrincipal.getTenantId())
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+        Tenant tenant = authService.getCurrentTenant();
 
         // High value: > $5000
         long highValueCount = customerRepository.countByTenantAndTotalSpentGreaterThan(
@@ -150,11 +142,9 @@ public class CustomerController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<Customer> getCustomer(
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable Long id) {
 
-        Tenant tenant = tenantRepository.findByTenantId(userPrincipal.getTenantId())
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+        Tenant tenant = authService.getCurrentTenant();
 
         Customer customer = customerRepository.findByIdAndTenant(id, tenant)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
@@ -176,15 +166,13 @@ public class CustomerController {
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     public ResponseEntity<byte[]> exportCustomersCSV(
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
             @Parameter(description = "Filter by customer segment: high (>$5000), medium ($1000-$5000), low (<$1000)")
             @RequestParam(required = false) String segment,
             @Parameter(description = "Search term for customer name or email")
             @RequestParam(required = false) String search) {
 
         try {
-            Tenant tenant = tenantRepository.findByTenantId(userPrincipal.getTenantId())
-                    .orElseThrow(() -> new RuntimeException("Tenant not found"));
+            Tenant tenant = authService.getCurrentTenant();
 
             // Get customers based on filters (no pagination for export)
             List<Customer> customers;

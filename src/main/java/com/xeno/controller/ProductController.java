@@ -3,8 +3,7 @@ package com.xeno.controller;
 import com.xeno.model.Product;
 import com.xeno.model.Tenant;
 import com.xeno.repository.ProductRepository;
-import com.xeno.repository.TenantRepository;
-import com.xeno.security.UserPrincipal;
+import com.xeno.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,7 +12,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -31,7 +29,7 @@ public class ProductController {
     private ProductRepository productRepository;
 
     @Autowired
-    private TenantRepository tenantRepository;
+    private AuthService authService;
 
     /**
      * Get product analytics statistics
@@ -46,11 +44,9 @@ public class ProductController {
             @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing JWT token", content = @Content),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
-    public ResponseEntity<Map<String, Object>> getProductStats(
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    public ResponseEntity<Map<String, Object>> getProductStats() {
 
-        Tenant tenant = tenantRepository.findByTenantId(userPrincipal.getTenantId())
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+        Tenant tenant = authService.getCurrentTenant();
 
         long totalProducts = productRepository.countByTenant(tenant);
         long activeProducts = productRepository.countByTenantAndStatus(tenant, "active");
@@ -89,11 +85,9 @@ public class ProductController {
     )
     @ApiResponse(responseCode = "200", description = "Successfully retrieved top products")
     public ResponseEntity<List<Map<String, Object>>> getTopProducts(
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestParam(defaultValue = "10") int limit) {
 
-        Tenant tenant = tenantRepository.findByTenantId(userPrincipal.getTenantId())
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+        Tenant tenant = authService.getCurrentTenant();
 
         // Get products with order counts
         List<Object[]> topProductData = productRepository.findTopProductsByOrders(tenant.getTenantId(), limit);
@@ -128,11 +122,9 @@ public class ProductController {
             description = "Get paginated list of all products for the tenant"
     )
     @ApiResponse(responseCode = "200", description = "Successfully retrieved products")
-    public ResponseEntity<List<Product>> getAllProducts(
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    public ResponseEntity<List<Product>> getAllProducts() {
 
-        Tenant tenant = tenantRepository.findByTenantId(userPrincipal.getTenantId())
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+        Tenant tenant = authService.getCurrentTenant();
 
         List<Product> products = productRepository.findByTenant(tenant);
         return ResponseEntity.ok(products);
@@ -147,11 +139,9 @@ public class ProductController {
             description = "Returns inventory levels categorized as in-stock, low-stock, and out-of-stock"
     )
     @ApiResponse(responseCode = "200", description = "Successfully retrieved inventory summary")
-    public ResponseEntity<Map<String, Object>> getInventorySummary(
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    public ResponseEntity<Map<String, Object>> getInventorySummary() {
 
-        Tenant tenant = tenantRepository.findByTenantId(userPrincipal.getTenantId())
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+        Tenant tenant = authService.getCurrentTenant();
 
         List<Product> products = productRepository.findByTenant(tenant);
 
