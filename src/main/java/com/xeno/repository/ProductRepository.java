@@ -25,7 +25,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     long countByTenantTenantId(String tenantId);
     
     @Query(value = "SELECT p.*, COUNT(oi.id) as order_count FROM products p " +
-           "LEFT JOIN order_items oi ON oi.product_id = p.id " +
+           "LEFT JOIN order_items oi ON oi.shopify_product_id = p.shopify_product_id " +
            "LEFT JOIN orders o ON oi.order_id = o.id " +
            "WHERE p.tenant_id = (SELECT id FROM tenants WHERE tenant_id = :tenantId) " +
            "GROUP BY p.id " +
