@@ -88,20 +88,16 @@ public class ProductController {
 
         Tenant tenant = authService.getCurrentTenant();
 
-        // Get all products for tenant
-        List<Product> products = productRepository.findByTenantTenantIdOrderByIdDesc(tenant.getTenantId());
+        // Get top products by order count
+        List<Object[]> results = productRepository.findTopProductsByOrderCount(tenant.getId());
 
-        List<Map<String, Object>> topProducts = products.stream()
+        List<Map<String, Object>> topProducts = results.stream()
                 .limit(limit)
-                .map(product -> {
+                .map(row -> {
                     Map<String, Object> productMap = new HashMap<>();
-                    productMap.put("id", product.getId());
-                    productMap.put("title", product.getTitle());
-                    productMap.put("vendor", product.getVendor());
-                    productMap.put("productType", product.getProductType());
-                    productMap.put("price", product.getPrice());
-                    productMap.put("inventoryQuantity", product.getInventoryQuantity());
-                    productMap.put("orderCount", 0); // Will be 0 for now
+                    productMap.put("shopifyProductId", row[0]);
+                    productMap.put("title", row[1]);
+                    productMap.put("orderCount", ((Number) row[2]).longValue());
                     
                     return productMap;
                 })
