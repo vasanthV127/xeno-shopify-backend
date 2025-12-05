@@ -27,12 +27,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p WHERE p.tenant.tenantId = :tenantId ORDER BY p.id DESC")
     List<Product> findByTenantTenantIdOrderByIdDesc(@Param("tenantId") String tenantId);
     
-    @Query("SELECT p.shopifyProductId as productId, p.title as title, COUNT(oi.id) as orderCount " +
+    @Query("SELECT p.id, p.shopifyProductId, p.title, p.vendor, p.productType, p.price, p.inventoryQuantity, COUNT(oi.id) as orderCount " +
            "FROM Product p " +
            "LEFT JOIN OrderItem oi ON oi.shopifyProductId = p.shopifyProductId " +
            "LEFT JOIN Order o ON o.id = oi.order.id " +
            "WHERE p.tenant.id = :tenantId AND (o.tenant.id = :tenantId OR o.tenant.id IS NULL) " +
-           "GROUP BY p.shopifyProductId, p.title " +
+           "GROUP BY p.id, p.shopifyProductId, p.title, p.vendor, p.productType, p.price, p.inventoryQuantity " +
            "ORDER BY orderCount DESC")
     List<Object[]> findTopProductsByOrderCount(@Param("tenantId") Long tenantId);
 }

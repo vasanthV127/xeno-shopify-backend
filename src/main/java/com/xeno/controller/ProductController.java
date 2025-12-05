@@ -88,16 +88,21 @@ public class ProductController {
 
         Tenant tenant = authService.getCurrentTenant();
 
-        // Get top products by order count
+        // Get top products by order count with full details
         List<Object[]> results = productRepository.findTopProductsByOrderCount(tenant.getId());
 
         List<Map<String, Object>> topProducts = results.stream()
                 .limit(limit)
                 .map(row -> {
                     Map<String, Object> productMap = new HashMap<>();
-                    productMap.put("shopifyProductId", row[0]);
-                    productMap.put("title", row[1]);
-                    productMap.put("orderCount", ((Number) row[2]).longValue());
+                    productMap.put("id", row[0]);
+                    productMap.put("shopifyProductId", row[1]);
+                    productMap.put("title", row[2]);
+                    productMap.put("vendor", row[3]);
+                    productMap.put("productType", row[4]);
+                    productMap.put("price", row[5]);
+                    productMap.put("inventoryQuantity", row[6]);
+                    productMap.put("orderCount", ((Number) row[7]).longValue());
                     
                     return productMap;
                 })
