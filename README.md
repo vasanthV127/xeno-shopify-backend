@@ -1,75 +1,121 @@
 # Xeno Shopify Insights - Backend Service
 
 > **Multi-Tenant Shopify Data Ingestion & Analytics Platform**  
-> Built with Spring Boot 3.2, PostgreSQL, and Shopify Admin API 2024-01
+> Built with Spring Boot 3.2, PostgreSQL, and Shopify Admin API 2024-01  
+> **Live Demo:** [xeno-shopify-backend-frzt.onrender.com](https://xeno-shopify-backend-frzt.onrender.com)  
+> **Frontend:** [xeno-shopify-frontend-five.vercel.app](https://xeno-shopify-frontend-five.vercel.app)
+
+[![Java](https://img.shields.io/badge/Java-17-orange?style=flat&logo=openjdk)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.0-brightgreen?style=flat&logo=spring)](https://spring.io/projects/spring-boot)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?style=flat&logo=postgresql)](https://www.postgresql.org/)
+[![Deployed on Render](https://img.shields.io/badge/Deployed%20on-Render-46E3B7?style=flat&logo=render)](https://render.com/)
+
+---
 
 ## 📋 Table of Contents
 - [Overview](#overview)
 - [Features Implemented](#features-implemented)
 - [Architecture](#architecture)
+- [Database Schema](#database-schema)
 - [Tech Stack](#tech-stack)
 - [API Endpoints](#api-endpoints)
-- [Database Schema](#database-schema)
 - [Setup Instructions](#setup-instructions)
 - [Deployment](#deployment)
+- [Demo Credentials](#demo-credentials)
 - [Known Limitations](#known-limitations)
-- [Assumptions](#assumptions)
 
 ---
 
 ## 🎯 Overview
 
-This backend service is a **multi-tenant SaaS platform** that connects to Shopify stores, ingests customer/order/product data, and provides REST APIs for business analytics. Each tenant (Shopify store) has isolated data with JWT-based authentication.
+This backend service is a **production-ready multi-tenant SaaS platform** that connects to Shopify stores via official Admin API, ingests customer/order/product data in real-time, and provides comprehensive REST APIs for business analytics and insights.
+
+**Key Highlights:**
+- 🛍️ **Real Shopify Integration** - Fetches live data from xenodemo1.myshopify.com using Admin API 2024-01
+- 🏢 **Multi-Tenant Architecture** - Complete data isolation with tenant_id filtering
+- 🔐 **JWT Authentication** - Secure token-based auth with BCrypt password hashing
+- 🔄 **Automated Sync** - Quartz scheduler syncs data every 6 hours + manual trigger
+- 🎁 **Bonus: Webhooks** - Real-time cart abandoned and checkout events
+- ☁️ **Production Deployed** - Backend on Render, Frontend on Vercel, PostgreSQL database
 
 **Assignment Completion Status:**
-- ✅ Shopify Store Setup (Dev store with dummy data)
-- ✅ Data Ingestion Service (Customers, Orders, Products)
-- ✅ Multi-tenant architecture with data isolation
-- ✅ REST APIs for analytics dashboard
-- ✅ Email-based authentication
-- ✅ Deployed on Render
+- ✅ Shopify Store Setup (xenodemo1.myshopify.com with 5 products, 5 customers, 3 orders)
+- ✅ Real Shopify API Integration (Admin API 2024-01 with REST calls)
+- ✅ Data Ingestion Service (Customers, Orders, Products synced from Shopify)
+- ✅ Multi-tenant architecture with complete data isolation
+- ✅ REST APIs for analytics dashboard (revenue, customers, products)
+- ✅ JWT-based authentication with secure signup/login
+- ✅ Deployed on Render with PostgreSQL database
 - ✅ Automated data sync (Quartz Scheduler - every 6 hours)
-- ✅ Database: PostgreSQL with Hibernate ORM
+- ✅ **BONUS:** Shopify Webhooks (cart_create, checkout_create, checkout_update)
+- ✅ GitHub Repository: [vasanthV127/xeno-shopify-backend](https://github.com/vasanthV127/xeno-shopify-backend)
 
 ---
 
 ## ✨ Features Implemented
 
-### 1. **Shopify Integration**
-- **Shopify Admin API 2024-01** integration using Spring WebFlux
+### 1. **Shopify Integration** ⭐
+- **Shopify Admin API 2024-01** integration using Spring WebFlux WebClient
+- **Real Data Source:** xenodemo1.myshopify.com (live Shopify development store)
+- **API Credentials:** Custom Shopify app "Xeno Integration" with Admin API access token
 - Ingests data from three key resources:
-  - **Customers** - Email, name, phone, total_spent, orders_count
-  - **Orders** - Order details, line items, financial status, dates
-  - **Products** - Title, price, inventory, vendor, product type
-- Automatic pagination handling (50 items per page)
-- GraphQL endpoint support for efficient data fetching
+  - **Customers** - Email, name, phone, total_spent, orders_count, location
+  - **Orders** - Order details, line items, financial status, fulfillment status, dates
+  - **Products** - Title, price, inventory_quantity, vendor, product_type
+- **Features:**
+  - Automatic pagination handling (REST API with limit parameter)
+  - Error handling with retry logic
+  - Detailed logging for debugging
+  - Tenant-specific API calls with isolated credentials
 
-### 2. **Multi-Tenant Architecture**
-- **Tenant Isolation:** Each Shopify store is a separate tenant
-- **Data Segregation:** All queries filtered by `tenant_id`
-- **JWT Authentication:** Secure token-based auth with tenant context
+### 2. **Multi-Tenant Architecture** 🏢
+- **Tenant Isolation:** Each Shopify store is a separate tenant with unique tenant_id (UUID)
+- **Data Segregation:** All database queries automatically filtered by `tenant_id`
+- **JWT Authentication:** Secure token-based auth with tenant context embedded in JWT claims
 - **ORM:** Hibernate/JPA for clean multi-tenant data handling
-- **Row-Level Security:** Database queries automatically scoped to logged-in tenant
+- **Row-Level Security:** Every entity has tenant_id for complete data isolation
+- **Verified:** Tested with xenodemo1 and multiple demo tenants simultaneously
 
-### 3. **Data Synchronization**
-- **Scheduled Sync:** Quartz scheduler runs every 6 hours
-- **Manual Trigger:** `/api/sync/trigger` endpoint for on-demand sync
-- **Incremental Updates:** Syncs only new/changed data
-- **Error Handling:** Retry logic and detailed logging
-- **Webhook Ready:** Infrastructure in place for real-time Shopify webhooks
+### 3. **Data Synchronization** 🔄
+- **Scheduled Sync:** Quartz scheduler runs every 6 hours automatically
+- **Manual Trigger:** `POST /api/sync/trigger` endpoint for on-demand sync
+- **Sync Process:**
+  1. Validates tenant credentials (Shopify domain + access token)
+  2. Makes REST API calls to Shopify endpoints (customers.json, products.json, orders.json)
+  3. Parses JSON responses and maps to JPA entities
+  4. Saves data to PostgreSQL with tenant_id isolation
+  5. Returns sync summary (customers/products/orders counts)
+- **Error Handling:** Comprehensive retry logic and detailed logging
+- **Performance:** Efficient batch processing with pagination support
+- **Verified:** Successfully synced 5 customers, 5 products, 3 orders from xenodemo1
 
-### 4. **Shopify Webhooks (Bonus Feature)**
-- **Real-Time Event Capture:** Cart abandoned and checkout started events
+### 4. **Shopify Webhooks (Bonus Feature)** 🎁
+- **Real-Time Event Capture:** Cart abandoned and checkout started events for remarketing
 - **Webhook Endpoints:**
-  - `POST /api/webhooks/shopify/cart/create` - Captures cart creation
+  - `POST /api/webhooks/shopify/cart/create` - Captures cart creation events
   - `POST /api/webhooks/shopify/checkout/create` - Captures checkout initiation
-  - `POST /api/webhooks/shopify/checkout/update` - Tracks checkout completion
-- **Database Tables:** `cart_events` and `checkout_events` for event tracking
-- **API Access:**
-  - `GET /api/events/carts/abandoned` - Retrieve abandoned cart events
-  - `GET /api/events/checkouts/abandoned` - Retrieve abandoned checkouts
-- **Use Case:** Remarketing campaigns, abandoned cart recovery
-- **Verified:** Live webhooks tested with xenodemo1 Shopify store
+  - `POST /api/webhooks/shopify/checkout/update` - Tracks checkout completion/abandonment
+- **Database Tables:** 
+  - `cart_events` - Stores cart_token, customer_email, cart_value, item_count, is_abandoned
+  - `checkout_events` - Stores checkout_token, customer_email, checkout_value, completed, abandoned
+- **Webhook Processing:**
+  - WebhookService extracts data from Shopify webhook payload
+  - Finds tenant by shopify_domain header
+  - Saves event to database with tenant_id isolation
+  - Returns 200 OK to acknowledge webhook receipt
+- **API Access Endpoints:**
+  - `GET /api/events/carts` - All cart events for logged-in tenant
+  - `GET /api/events/carts/abandoned` - Abandoned carts for remarketing
+  - `GET /api/events/checkouts` - All checkout events
+  - `GET /api/events/checkouts/abandoned` - Abandoned checkouts
+  - `GET /api/events/checkouts/completed` - Completed checkouts
+- **Use Cases:** 
+  - Abandoned cart recovery campaigns
+  - Checkout funnel optimization
+  - Customer behavior analytics
+  - Email/SMS remarketing automation
+- **Verified Status:** ✅ Live webhooks tested with xenodemo1.myshopify.com
+- **Shopify Configuration:** Webhooks registered in Shopify Settings → Notifications
 
 ### 5. **REST API**
 - **Authentication:** JWT-based signup/login
@@ -353,30 +399,137 @@ Manually trigger Shopify data sync
 
 ## 🗄️ Database Schema
 
+### Complete ERD (Entity-Relationship Diagram)
+
+```mermaid
+erDiagram
+    TENANTS ||--o{ CUSTOMERS : "has"
+    TENANTS ||--o{ PRODUCTS : "has"
+    TENANTS ||--o{ ORDERS : "has"
+    TENANTS ||--o{ CART_EVENTS : "has"
+    TENANTS ||--o{ CHECKOUT_EVENTS : "has"
+    ORDERS ||--o{ ORDER_ITEMS : "contains"
+    PRODUCTS ||--o{ ORDER_ITEMS : "referenced_in"
+    CUSTOMERS ||--o{ ORDERS : "places"
+
+    TENANTS {
+        bigint id PK
+        string tenant_id UK
+        string email UK
+        string password_hash
+        string store_name
+        string shopify_domain UK
+        string shopify_access_token
+        boolean active
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    CUSTOMERS {
+        bigint id PK
+        bigint tenant_id FK
+        string shopify_customer_id
+        string email
+        string first_name
+        string last_name
+        string phone
+        decimal total_spent
+        int orders_count
+        timestamp last_order_date
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    PRODUCTS {
+        bigint id PK
+        bigint tenant_id FK
+        string shopify_product_id
+        string title
+        decimal price
+        int inventory_quantity
+        string vendor
+        string product_type
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    ORDERS {
+        bigint id PK
+        bigint tenant_id FK
+        bigint customer_id FK
+        string shopify_order_id
+        string order_number
+        decimal total_price
+        string financial_status
+        string fulfillment_status
+        timestamp order_date
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    ORDER_ITEMS {
+        bigint id PK
+        bigint order_id FK
+        string shopify_product_id
+        string product_title
+        int quantity
+        decimal price
+        decimal total_discount
+        timestamp created_at
+    }
+
+    CART_EVENTS {
+        bigint id PK
+        bigint tenant_id FK
+        string cart_token
+        string customer_email
+        decimal cart_value
+        int item_count
+        string event_type
+        boolean is_abandoned
+        timestamp created_at
+        timestamp abandoned_at
+    }
+
+    CHECKOUT_EVENTS {
+        bigint id PK
+        bigint tenant_id FK
+        string checkout_token
+        string customer_email
+        decimal checkout_value
+        int item_count
+        string event_type
+        boolean completed
+        boolean abandoned
+        timestamp created_at
+        timestamp completed_at
+        timestamp abandoned_at
+    }
+```
+
 ### Tenants Table
 Stores Shopify store credentials and metadata
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | BIGSERIAL | Primary key (auto-increment) |
-| `tenant_id` | VARCHAR(255) | UUID business key |
+| `tenant_id` | VARCHAR(255) | UUID business key (UNIQUE) |
 | `email` | VARCHAR(255) | Login email (UNIQUE) |
 | `password` | VARCHAR(255) | BCrypt hashed password |
 | `store_name` | VARCHAR(255) | Display name |
-| `shopify_domain` | VARCHAR(255) | myshopify.com domain |
-| `shopify_access_token` | VARCHAR(255) | API access token |
+| `shopify_domain` | VARCHAR(255) | myshopify.com domain (UNIQUE) |
+| `shopify_access_token` | VARCHAR(255) | Admin API access token |
 | `active` | BOOLEAN | Account status |
 | `created_at` | TIMESTAMP | Registration date |
 | `updated_at` | TIMESTAMP | Last modified |
 
 **Indexes:** 
-- `UNIQUE(email)`
-- `UNIQUE(tenant_id)`
+- `UNIQUE(email)`, `UNIQUE(tenant_id)`, `UNIQUE(shopify_domain)`
 
 ---
 
 ### Customers Table
-Customer data from Shopify
+Customer data synced from Shopify
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -387,20 +540,20 @@ Customer data from Shopify
 | `first_name` | VARCHAR(255) | First name |
 | `last_name` | VARCHAR(255) | Last name |
 | `phone` | VARCHAR(50) | Phone number |
-| `orders_count` | INTEGER | Total orders |
-| `total_spent` | DECIMAL(15,2) | Lifetime value |
+| `orders_count` | INTEGER | Total orders placed |
+| `total_spent` | DECIMAL(15,2) | Lifetime value (₹) |
 | `last_order_date` | TIMESTAMP | Most recent order |
-| `created_at` | TIMESTAMP | First seen |
-| `updated_at` | TIMESTAMP | Last synced |
+| `created_at` | TIMESTAMP | First seen in system |
+| `updated_at` | TIMESTAMP | Last synced from Shopify |
 
 **Indexes:**
-- `INDEX(tenant_id)`
-- `INDEX(total_spent)` (for top customers query)
+- `INDEX(tenant_id)` (multi-tenant isolation)
+- `INDEX(total_spent DESC)` (top customers query optimization)
 
 ---
 
 ### Orders Table
-Order transactions
+Order transactions synced from Shopify
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -408,39 +561,46 @@ Order transactions
 | `tenant_id` | BIGINT | Foreign key → tenants.id |
 | `customer_id` | BIGINT | Foreign key → customers.id |
 | `shopify_order_id` | VARCHAR(255) | Shopify order ID |
-| `order_number` | VARCHAR(50) | Display order # |
+| `order_number` | VARCHAR(50) | Display order # (e.g., #1001) |
 | `order_date` | TIMESTAMP | Order placed date |
-| `total_price` | DECIMAL(15,2) | Total amount |
-| `subtotal_price` | DECIMAL(15,2) | Subtotal |
+| `total_price` | DECIMAL(15,2) | Total amount (₹) |
+| `subtotal_price` | DECIMAL(15,2) | Subtotal before tax/shipping |
 | `total_tax` | DECIMAL(15,2) | Tax amount |
 | `total_shipping` | DECIMAL(15,2) | Shipping cost |
 | `financial_status` | VARCHAR(50) | paid/pending/refunded |
-| `fulfillment_status` | VARCHAR(50) | fulfilled/unfulfilled |
+| `fulfillment_status` | VARCHAR(50) | fulfilled/unfulfilled/partial |
+| `created_at` | TIMESTAMP | Created in system |
+| `updated_at` | TIMESTAMP | Last synced |
 
 **Indexes:**
-- `INDEX(tenant_id, order_date)` (for date range queries)
-- `INDEX(customer_id)`
+- `INDEX(tenant_id, order_date)` (date range revenue queries)
+- `INDEX(customer_id)` (customer order history)
 
 ---
 
 ### Order Items Table
-Line items in orders
+Line items (products) within orders
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | BIGSERIAL | Primary key |
 | `order_id` | BIGINT | Foreign key → orders.id |
 | `shopify_product_id` | VARCHAR(255) | Product identifier |
-| `product_title` | VARCHAR(500) | Product name |
+| `product_title` | VARCHAR(500) | Product name snapshot |
 | `variant_title` | VARCHAR(255) | Variant (size/color) |
 | `quantity` | INTEGER | Items ordered |
-| `price` | DECIMAL(15,2) | Unit price |
+| `price` | DECIMAL(15,2) | Unit price at time of order |
 | `total_discount` | DECIMAL(15,2) | Discount applied |
+| `created_at` | TIMESTAMP | Created in system |
+
+**Indexes:**
+- `INDEX(order_id)` (fetch order items)
+- `INDEX(shopify_product_id)` (product analytics)
 
 ---
 
 ### Products Table
-Product catalog
+Product catalog synced from Shopify
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -449,9 +609,81 @@ Product catalog
 | `shopify_product_id` | VARCHAR(255) | Shopify product ID |
 | `title` | VARCHAR(500) | Product name |
 | `vendor` | VARCHAR(255) | Brand/Supplier |
-| `product_type` | VARCHAR(255) | Category |
-| `price` | DECIMAL(15,2) | Current price |
+| `product_type` | VARCHAR(255) | Category (e.g., Sneakers, T-Shirt) |
+| `price` | DECIMAL(15,2) | Current price (₹) |
 | `inventory_quantity` | INTEGER | Stock level |
+| `created_at` | TIMESTAMP | Created in system |
+| `updated_at` | TIMESTAMP | Last synced |
+
+**Indexes:**
+- `INDEX(tenant_id)` (multi-tenant isolation)
+
+---
+
+### Cart Events Table (Bonus - Webhooks)
+Captures cart creation and abandonment events
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | BIGSERIAL | Primary key |
+| `tenant_id` | BIGINT | Foreign key → tenants.id |
+| `cart_token` | VARCHAR(255) | Unique cart identifier |
+| `customer_email` | VARCHAR(255) | Customer email (if available) |
+| `cart_value` | DECIMAL(15,2) | Total cart value (₹) |
+| `item_count` | INTEGER | Number of items in cart |
+| `event_type` | VARCHAR(50) | cart_created/cart_abandoned |
+| `is_abandoned` | BOOLEAN | Abandoned status flag |
+| `created_at` | TIMESTAMP | Cart created timestamp |
+| `abandoned_at` | TIMESTAMP | Abandoned timestamp (nullable) |
+
+**Indexes:**
+- `INDEX(tenant_id, is_abandoned)` (abandoned cart queries)
+
+---
+
+### Checkout Events Table (Bonus - Webhooks)
+Captures checkout started, completed, and abandoned events
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | BIGSERIAL | Primary key |
+| `tenant_id` | BIGINT | Foreign key → tenants.id |
+| `checkout_token` | VARCHAR(255) | Unique checkout identifier |
+| `customer_email` | VARCHAR(255) | Customer email |
+| `checkout_value` | DECIMAL(15,2) | Total checkout value (₹) |
+| `item_count` | INTEGER | Number of items |
+| `event_type` | VARCHAR(50) | checkout_started/checkout_completed |
+| `completed` | BOOLEAN | Completed status flag |
+| `abandoned` | BOOLEAN | Abandoned status flag |
+| `created_at` | TIMESTAMP | Checkout started timestamp |
+| `completed_at` | TIMESTAMP | Completed timestamp (nullable) |
+| `abandoned_at` | TIMESTAMP | Abandoned timestamp (nullable) |
+
+**Indexes:**
+- `INDEX(tenant_id, abandoned)` (abandoned checkout queries)
+- `INDEX(tenant_id, completed)` (completed checkout queries)
+
+---
+
+### Multi-Tenant Data Isolation
+
+**Every query automatically filters by tenant_id:**
+
+```java
+// Example: CustomerRepository
+@Query("SELECT c FROM Customer c WHERE c.tenant.id = :tenantId")
+List<Customer> findByTenantId(@Param("tenantId") Long tenantId);
+
+// JWT provides tenant context in SecurityContextHolder
+```
+
+**Sample Data (xenodemo1.myshopify.com):**
+- Tenant: test@xenodemo1.com (tenant_id: 8c99fa69-fbf7-4e71-a92b-78d319d8915f)
+- Customers: 5 (John Doe, Priya Sharma, Rahul Patel, Sarah Johnson, Amit Kumar)
+- Products: 5 (Sneakers ₹750, T-Shirt ₹250, Jeans ₹500, Jacket ₹1000, Cap ₹150)
+- Orders: 3 (Total revenue: ₹8,043.50)
+
+---
 | `status` | VARCHAR(50) | active/archived |
 
 **Indexes:**
