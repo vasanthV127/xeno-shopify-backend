@@ -10,6 +10,7 @@ import com.xeno.repository.CustomerRepository;
 import com.xeno.repository.OrderRepository;
 import com.xeno.repository.ProductRepository;
 import com.xeno.repository.TenantRepository;
+import com.xeno.service.WebhookService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,9 @@ public class WebhookController {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private WebhookService webhookService;
 
     /**
      * Webhook endpoint for Shopify order creation/update
@@ -358,4 +362,71 @@ public class WebhookController {
         
         return product;
     }
+    
+    /**
+     * Webhook endpoint for Shopify cart creation
+     */
+    @PostMapping("/cart/create")
+    public ResponseEntity<String> handleCartCreate(
+            @RequestBody Map<String, Object> payload,
+            @RequestHeader(value = "X-Shopify-Shop-Domain", required = false) String shopDomain,
+            @RequestHeader(value = "X-Shopify-Hmac-Sha256", required = false) String hmacHeader) {
+        
+        try {
+            logger.info("Received cart_create webhook from domain: {}", shopDomain);
+            
+            // Process the webhook
+            webhookService.processCartCreate(payload, shopDomain);
+            
+            return ResponseEntity.ok("Cart webhook processed successfully");
+        } catch (Exception e) {
+            logger.error("Error processing cart_create webhook", e);
+            return ResponseEntity.status(500).body("Error processing webhook");
+        }
+    }
+    
+    /**
+     * Webhook endpoint for Shopify checkout creation
+     */
+    @PostMapping("/checkout/create")
+    public ResponseEntity<String> handleCheckoutCreate(
+            @RequestBody Map<String, Object> payload,
+            @RequestHeader(value = "X-Shopify-Shop-Domain", required = false) String shopDomain,
+            @RequestHeader(value = "X-Shopify-Hmac-Sha256", required = false) String hmacHeader) {
+        
+        try {
+            logger.info("Received checkout_create webhook from domain: {}", shopDomain);
+            
+            // Process the webhook
+            webhookService.processCheckoutCreate(payload, shopDomain);
+            
+            return ResponseEntity.ok("Checkout webhook processed successfully");
+        } catch (Exception e) {
+            logger.error("Error processing checkout_create webhook", e);
+            return ResponseEntity.status(500).body("Error processing webhook");
+        }
+    }
+    
+    /**
+     * Webhook endpoint for Shopify checkout update
+     */
+    @PostMapping("/checkout/update")
+    public ResponseEntity<String> handleCheckoutUpdate(
+            @RequestBody Map<String, Object> payload,
+            @RequestHeader(value = "X-Shopify-Shop-Domain", required = false) String shopDomain,
+            @RequestHeader(value = "X-Shopify-Hmac-Sha256", required = false) String hmacHeader) {
+        
+        try {
+            logger.info("Received checkout_update webhook from domain: {}", shopDomain);
+            
+            // Process the webhook
+            webhookService.processCheckoutUpdate(payload, shopDomain);
+            
+            return ResponseEntity.ok("Checkout update webhook processed successfully");
+        } catch (Exception e) {
+            logger.error("Error processing checkout_update webhook", e);
+            return ResponseEntity.status(500).body("Error processing webhook");
+        }
+    }
 }
+
