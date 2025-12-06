@@ -58,15 +58,29 @@ This backend service is a **multi-tenant SaaS platform** that connects to Shopif
 - **Error Handling:** Retry logic and detailed logging
 - **Webhook Ready:** Infrastructure in place for real-time Shopify webhooks
 
-### 4. **REST API**
+### 4. **Shopify Webhooks (Bonus Feature)**
+- **Real-Time Event Capture:** Cart abandoned and checkout started events
+- **Webhook Endpoints:**
+  - `POST /api/webhooks/shopify/cart/create` - Captures cart creation
+  - `POST /api/webhooks/shopify/checkout/create` - Captures checkout initiation
+  - `POST /api/webhooks/shopify/checkout/update` - Tracks checkout completion
+- **Database Tables:** `cart_events` and `checkout_events` for event tracking
+- **API Access:**
+  - `GET /api/events/carts/abandoned` - Retrieve abandoned cart events
+  - `GET /api/events/checkouts/abandoned` - Retrieve abandoned checkouts
+- **Use Case:** Remarketing campaigns, abandoned cart recovery
+- **Verified:** Live webhooks tested with xenodemo1 Shopify store
+
+### 5. **REST API**
 - **Authentication:** JWT-based signup/login
 - **Dashboard Analytics:** Revenue, orders, customers metrics
 - **Customer Insights:** Top customers by spend, segmentation
 - **Product Analytics:** Top products, inventory status
 - **Date Filtering:** Query data by date ranges
+- **Webhook Events:** Endpoints for cart/checkout abandoned events
 - **Swagger Documentation:** Auto-generated API docs at `/swagger-ui/`
 
-### 5. **Security**
+### 6. **Security**
 - **BCrypt Password Hashing:** Passwords never stored in plain text
 - **JWT Tokens:** 24-hour expiry with secure signing
 - **CORS Configuration:** Controlled cross-origin access
